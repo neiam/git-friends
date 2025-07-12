@@ -43,6 +43,7 @@ test/
 
 # Example and configuration files
 *.example
+!git-friends.toml.example
 *.sample
 example-*
 install-*.sh
