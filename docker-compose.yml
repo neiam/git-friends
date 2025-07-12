@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # MQTT Broker
+  mqtt:
+    image: eclipse-mosquitto:2.0
+    container_name: git-friends-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./docker/mosquitto/data:/mosquitto/data
+      - ./docker/mosquitto/log:/mosquitto/log
+    restart: unless-stopped
+    networks:
+      - git-friends-network
+
+  # Git Friends Server
+  git-friends-server:
+    build: .
+    container_name: git-friends-server
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docker/config/git-friends.toml:/app/config/git-friends.toml:ro
+      - ./docker/logs:/app/logs
+    environment:
+      - RUST_LOG=info
+      - GIT_FRIENDS_CONFIG=/app/config/git-friends.toml
+    depends_on:
+      - mqtt
+    restart: unless-stopped
+    networks:
+      - git-friends-network
+    command: ["./bin/gf-server", "--bind", "0.0.0.0:8080"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Git Friends IRC Client
+  git-friends-irc:
+    build: .
+    container_name: git-friends-irc
+    volumes:
+      - ./docker/config/git-friends.toml:/app/config/git-friends.toml:ro
+      - ./docker/logs:/app/logs
+    environment:
+      - RUST_LOG=info
+      - GIT_FRIENDS_CONFIG=/app/config/git-friends.toml
+    depends_on:
+      - mqtt
+      - git-friends-server
+    restart: unless-stopped
+    networks:
+      - git-friends-network
+    command: ["./bin/gf-irc"]
+
+  # Optional: Git Friends Tester (for development/testing)
+  git-friends-tester:
+    build: .
+    container_name: git-friends-tester
+    volumes:
+      - ./docker/config/git-friends.toml:/app/config/git-friends.toml:ro
+    environment:
+      - RUST_LOG=info
+      - GIT_FRIENDS_CONFIG=/app/config/git-friends.toml
+    depends_on:
+      - mqtt
+      - git-friends-server
+    networks:
+      - git-friends-network
+    command: ["./bin/gf-tester", "--continuous", "--interval", "30"]
+    profiles:
+      - testing
+
+networks:
+  git-friends-network:
+    driver: bridge
+
+volumes:
+  mosquitto-data:
+  mosquitto-log:

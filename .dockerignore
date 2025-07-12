@@ -1,0 +1,65 @@
+# Git and version control
+.git
+.gitignore
+.gitattributes
+
+# Build artifacts
+target/
+dist/
+build/
+
+# Documentation
+*.md
+docs/
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+logs/
+
+# Test files
+tests/
+test/
+
+# Example and configuration files
+*.example
+*.sample
+example-*
+install-*.sh
+diagnose-*.sh
+
+# Documentation
+README*
+CHANGELOG*
+LICENSE*
+
+# Docker development files
+docker/
+.git-friends.profile
+
+# Cache directories
+.cache/
+node_modules/
+
+# our test config
+git-friends.toml
