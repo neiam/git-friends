@@ -14,7 +14,14 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            arch: x86_64
+          - runner: [self-hosted, runner-aarch64]
+            arch: aarch64
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
       packages: write
@@ -76,21 +83,27 @@ jobs:
       packages: write
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
-        rust: [ "1.86" ]
         include:
           - os: ubuntu-latest
             name: git-friends-x86_64-linux-gnu.tar.gz
             archive_cmd: tar -czf
             binary_ext: ""
-          - os: macos-latest
-            name: git-friends-x86_64-macos.tar.gz
+            rust: "1.86"
+          - os: [self-hosted, runner-aarch64]
+            name: git-friends-aarch64-linux-gnu.tar.gz
             archive_cmd: tar -czf
             binary_ext: ""
+            rust: "1.86"
+          - os: macos-latest
+            name: git-friends-aarch64-macos.tar.gz
+            archive_cmd: tar -czf
+            binary_ext: ""
+            rust: "1.86"
           - os: windows-latest
             name: git-friends-x86_64-windows.zip
             archive_cmd: 7z a
             binary_ext: ".exe"
+            rust: "1.86"
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -168,6 +181,7 @@ jobs:
           echo "## Supported Platforms" >> release_notes.md
           echo "" >> release_notes.md
           echo "- Linux (x86_64)" >> release_notes.md
+          echo "- Linux (aarch64)" >> release_notes.md
           echo "- Windows (x86_64)" >> release_notes.md
           echo "- macOS (x86_64 and Apple Silicon)" >> release_notes.md
           echo "" >> release_notes.md
