@@ -1,0 +1,14 @@
+# Git Friends Network Quadlet
+# This creates a network for all git-friends services
+
+[Unit]
+Description=Git Friends Network
+Documentation=https://github.com/containers/podman/blob/main/docs/source/markdown/podman-systemd.unit.5.md
+
+[Network]
+NetworkName=git-friends-network
+Driver=bridge
+Internal=false
+
+[Install]
+WantedBy=default.target

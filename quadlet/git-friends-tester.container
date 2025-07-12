@@ -1,0 +1,24 @@
+# Git Friends Tester Quadlet (Optional - for testing)
+
+[Unit]
+Description=Git Friends Tester
+Documentation=https://github.com/containers/podman/blob/main/docs/source/markdown/podman-systemd.unit.5.md
+After=git-friends-network.service git-friends-mqtt.service git-friends-server.service
+Requires=git-friends-network.service
+Wants=git-friends-mqtt.service git-friends-server.service
+
+[Container]
+ContainerName=git-friends-tester
+Image=localhost/git-friends:latest
+Volume=%i/docker/config/git-friends.toml:/app/config/git-friends.toml:ro,Z
+Environment=RUST_LOG=info
+Environment=GIT_FRIENDS_CONFIG=/app/config/git-friends.toml
+Network=git-friends-network.network
+Exec=./bin/gf-tester --continuous --interval 30
+
+[Service]
+Restart=unless-stopped
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

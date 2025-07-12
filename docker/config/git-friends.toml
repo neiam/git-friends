@@ -1,0 +1,44 @@
+# Git Friends Docker Configuration
+
+[server]
+host = "0.0.0.0"
+port = 8080
+bind_address = "0.0.0.0:8080"
+
+[mqtt]
+broker_host = "mqtt"
+broker_port = 1883
+client_id = "git-friends"
+# username = "mqtt_user"     # Optional
+# password = "mqtt_pass"     # Optional
+topic_prefix = "git-friends"
+
+[irc]
+server = "irc.libera.chat"
+port = 6667
+nick = "git-friends-bot"
+username = "git-friends-bot"
+real_name = "Git Friends Bot"
+channels = ["#git-friends"]
+use_tls = false
+# MQTT topics to listen to (supports wildcards)
+topic_filters = ["git-friends/+/+", "git-friends/+/+/+"]
+
+[git]
+# Optional: Path to install git hooks
+# hook_script_path = "/path/to/hooks"
+
+# Repository URL mappings (optional)
+# Maps repository URLs to custom topic suffixes
+# If not specified, URLs are automatically sanitized
+[git.repository_mappings]
+# "https://github.com/user/repo" = "user_repo"
+
+[auth]
+# Generate tokens with: docker-compose exec git-friends-server ./bin/gf-server --generate-token username
+[[auth.tokens]]
+token = "docker-example-token-change-me"
+username = "docker-user"
+
+# Whether to require authentication
+require_auth = false

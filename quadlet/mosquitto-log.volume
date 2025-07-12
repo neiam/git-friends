@@ -1,0 +1,11 @@
+# Git Friends Mosquitto Log Volume Quadlet
+
+[Unit]
+Description=Git Friends Mosquitto Log Volume
+Documentation=https://github.com/containers/podman/blob/main/docs/source/markdown/podman-systemd.unit.5.md
+
+[Volume]
+VolumeName=mosquitto-log
+
+[Install]
+WantedBy=default.target

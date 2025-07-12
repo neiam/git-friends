@@ -1,0 +1,27 @@
+# Git Friends MQTT Broker (Mosquitto) Production Quadlet
+
+[Unit]
+Description=Git Friends MQTT Broker (Mosquitto) - Production
+Documentation=https://github.com/containers/podman/blob/main/docs/source/markdown/podman-systemd.unit.5.md
+After=git-friends-network.service
+Requires=git-friends-network.service
+Wants=mosquitto-data.service mosquitto-log.service
+
+[Container]
+ContainerName=git-friends-mqtt-prod
+Image=eclipse-mosquitto:2.0
+PublishPort=1883:1883
+Volume=%i/docker/mosquitto/mosquitto.prod.conf:/mosquitto/config/mosquitto.conf:ro,Z
+Volume=%i/docker/mosquitto/passwd:/mosquitto/config/passwd:ro,Z
+Volume=%i/docker/mosquitto/acl:/mosquitto/config/acl:ro,Z
+Volume=mosquitto-data:/mosquitto/data:Z
+Volume=mosquitto-log:/mosquitto/log:Z
+Network=git-friends-network.network
+AutoUpdate=registry
+
+[Service]
+Restart=unless-stopped
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

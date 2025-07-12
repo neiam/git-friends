@@ -1,0 +1,25 @@
+# Git Friends IRC Client Production Quadlet
+
+[Unit]
+Description=Git Friends IRC Client - Production
+Documentation=https://github.com/containers/podman/blob/main/docs/source/markdown/podman-systemd.unit.5.md
+After=git-friends-network.service git-friends-mqtt-prod.service git-friends-server-prod.service
+Requires=git-friends-network.service
+Wants=git-friends-mqtt-prod.service git-friends-server-prod.service git-friends-logs.service
+
+[Container]
+ContainerName=git-friends-irc-prod
+Image=localhost/git-friends:latest
+Volume=%i/docker/config/git-friends.prod.toml:/app/config/git-friends.toml:ro,Z
+Volume=git-friends-logs:/app/logs:Z
+Environment=RUST_LOG=info
+Environment=GIT_FRIENDS_CONFIG=/app/config/git-friends.toml
+Network=git-friends-network.network
+Exec=./bin/gf-irc
+
+[Service]
+Restart=unless-stopped
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target
