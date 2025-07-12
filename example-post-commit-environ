@@ -1,0 +1,53 @@
+#!/bin/bash
+# .git/hooks/example-post-commit-environ
+#
+# Environment-based post-commit hook for Git Friends
+# This hook uses environment variables for configuration instead of command-line arguments
+#
+# To use this hook:
+# 1. Copy this file to .git/hooks/post-commit
+# 2. Make it executable: chmod +x .git/hooks/post-commit
+# 3. Source the accompanying .profile file or set the environment variables manually
+#
+# Environment variables used:
+# - GF_HOOK_PATH: Path to the gf-hook binary (required)
+# - GF_SERVER_URL: URL of the gf-server (optional, defaults to http://localhost:8080)
+# - GF_TOKEN: Authentication token (optional, only needed if server requires auth)
+# - GF_CONFIG: Path to git-friends config file (optional)
+
+# Source the git-friends profile if it exists
+if [ -f "$HOME/.git-friends.profile" ]; then
+    source "$HOME/.git-friends.profile"
+fi
+
+# Check if gf-hook path is set
+if [ -z "$GF_HOOK_PATH" ]; then
+    echo "Error: GF_HOOK_PATH environment variable is not set"
+    echo "Please set it to the path of your gf-hook binary"
+    exit 1
+fi
+
+# Check if gf-hook binary exists
+if [ ! -x "$GF_HOOK_PATH" ]; then
+    echo "Error: gf-hook binary not found or not executable at: $GF_HOOK_PATH"
+    exit 1
+fi
+
+# Set default server URL if not provided
+GF_SERVER_URL=${GF_SERVER_URL:-"http://localhost:8080"}
+
+# Build the command with optional arguments
+GF_HOOK_ARGS="--server-url $GF_SERVER_URL"
+
+# Add token if provided
+if [ -n "$GF_TOKEN" ]; then
+    GF_HOOK_ARGS="$GF_HOOK_ARGS --token $GF_TOKEN"
+fi
+
+# Add config file if provided
+if [ -n "$GF_CONFIG" ]; then
+    GF_HOOK_ARGS="$GF_HOOK_ARGS --config $GF_CONFIG"
+fi
+
+# Execute the hook
+exec "$GF_HOOK_PATH" $GF_HOOK_ARGS

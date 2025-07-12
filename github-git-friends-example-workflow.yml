@@ -1,0 +1,27 @@
+name: Git Friends Notification
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Get full history for better git info
+    
+    - name: Send Git Friends notification
+      uses: ./  # Use local action, or specify neiam/git-friends@master
+      with:
+        server-url: ${{ secrets.GIT_FRIENDS_SERVER_URL }}
+        token: ${{ secrets.GIT_FRIENDS_TOKEN }}
+        # Optional: specific version
+        # gf-hook-version: v1.0.0
+        # Optional: dry run mode
+        # dry-run: true

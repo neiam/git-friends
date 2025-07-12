@@ -1,0 +1,28 @@
+[server]
+host = "localhost"
+port = 8080
+bind_address = "127.0.0.1:8080"
+
+[mqtt]
+broker_host = "localhost"
+broker_port = 1883
+client_id = "git-friends-test"
+topic_prefix = "git-friends-test"
+
+[irc]
+server = "irc.libera.chat"
+port = 6667
+nick = "git-friends-test"
+username = "git-friends-test"
+real_name = "Git Friends Test Bot"
+channels = ["#git-friends-test"]
+use_tls = false
+topic_filters = ["git-friends-test/+/+"]
+
+[auth]
+require_auth = false
+tokens = []
+
+[git]
+hook_script_path = "/tmp/git-hook"
+repository_mappings = {}

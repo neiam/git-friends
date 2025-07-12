@@ -1,0 +1,65 @@
+[package]
+name = "git-friends"
+version = "0.1.0"
+edition = "2021"
+
+# Define the binaries
+[[bin]]
+name = "gf-hook"
+path = "src/bin/gf-hook.rs"
+
+[[bin]]
+name = "gf-server"
+path = "src/bin/gf-server.rs"
+
+[[bin]]
+name = "gf-irc"
+path = "src/bin/gf-irc.rs"
+
+[[bin]]
+name = "gf-tester"
+path = "src/bin/gf-tester.rs"
+
+[dependencies]
+# HTTP server dependencies
+tokio = { version = "1", features = ["full"] }
+warp = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# HTTP client dependencies
+reqwest = { version = "0.11", features = ["json"] }
+
+# MQTT dependencies
+rumqttc = "0.24"
+
+# IRC client dependencies
+irc = "0.15"
+
+# Git operations
+git2 = "0.18"
+
+# Configuration and environment
+config = "0.14"
+dotenv = "0.15"
+
+# Logging
+log = "0.4"
+env_logger = "0.10"
+
+# Authentication
+uuid = { version = "1.0", features = ["v4"] }
+base64 = "0.21"
+
+# Command line parsing
+clap = { version = "4.0", features = ["derive"] }
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Futures utilities
+futures-util = "0.3"
+
+# Testing
+tempfile = "3.0"
