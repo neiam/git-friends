@@ -1,6 +1,6 @@
+use config::{Config as ConfigImpl, ConfigError, Environment, File};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use config::{Config as ConfigImpl, ConfigError, Environment, File};
 use std::env;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -114,7 +114,7 @@ impl Config {
             .set_default("irc.real_name", "Git Friends Bot")?
             .set_default("irc.use_tls", false)?
             .set_default("auth.require_auth", true)?;
-        
+
         // Try to load from config file
         if let Ok(config_path) = env::var("GIT_FRIENDS_CONFIG") {
             config = config.add_source(File::with_name(&config_path).required(false));
@@ -125,33 +125,43 @@ impl Config {
                 .add_source(File::with_name("config/git-friends.toml").required(false))
                 .add_source(File::with_name("/etc/git-friends.toml").required(false));
         }
-        
+
         // Override with environment variables
         config = config.add_source(Environment::with_prefix("GIT_FRIENDS"));
-        
+
         config.build()?.try_deserialize()
     }
-    
-    pub fn mqtt_topic_for_repo(&self, repo_url: &str, committer: &str, username: Option<&str>) -> String {
-        let repo_suffix = self.git.repository_mappings
+
+    pub fn mqtt_topic_for_repo(
+        &self,
+        repo_url: &str,
+        committer: &str,
+        username: Option<&str>,
+    ) -> String {
+        let repo_suffix = self
+            .git
+            .repository_mappings
             .get(repo_url)
             .cloned()
             .unwrap_or_else(|| Self::sanitize_repo_url(repo_url));
-        
+
         if let Some(username) = username {
-            format!("{}/{}/{}/{}", self.mqtt.topic_prefix, username, repo_suffix, committer)
+            format!(
+                "{}/{}/{}/{}",
+                self.mqtt.topic_prefix, username, repo_suffix, committer
+            )
         } else {
             format!("{}/{}/{}", self.mqtt.topic_prefix, repo_suffix, committer)
         }
     }
-    
+
     fn sanitize_repo_url(url: &str) -> String {
         url.replace("https://", "")
-           .replace("http://", "")
-           .replace("git@", "")
-           .replace(":", "/")
-           .replace(".git", "")
-           .replace("/", "_")
-           .replace(".", "_")
+            .replace("http://", "")
+            .replace("git@", "")
+            .replace(":", "/")
+            .replace(".git", "")
+            .replace("/", "_")
+            .replace(".", "_")
     }
 }
