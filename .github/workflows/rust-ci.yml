@@ -29,6 +29,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install system dependencies (self-hosted Linux)
+        if: runner.os == 'Linux' && contains(matrix.runner, 'self-hosted')
+        run: |
+          if command -v apt-get &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y pkg-config libssl-dev
+          elif command -v yum &> /dev/null; then
+            sudo yum install -y pkgconfig openssl-devel
+          elif command -v dnf &> /dev/null; then
+            sudo dnf install -y pkgconfig openssl-devel
+          elif command -v pacman &> /dev/null; then
+            sudo pacman -Sy --noconfirm pkgconf openssl
+          elif command -v apk &> /dev/null; then
+            sudo apk add --no-cache pkgconfig openssl-dev
+          else
+            echo "Package manager not found. Please install pkg-config and openssl-dev manually."
+            exit 1
+          fi
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -108,6 +127,25 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install system dependencies (self-hosted Linux)
+        if: runner.os == 'Linux' && contains(matrix.os, 'self-hosted')
+        run: |
+          if command -v apt-get &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y pkg-config libssl-dev
+          elif command -v yum &> /dev/null; then
+            sudo yum install -y pkgconfig openssl-devel
+          elif command -v dnf &> /dev/null; then
+            sudo dnf install -y pkgconfig openssl-devel
+          elif command -v pacman &> /dev/null; then
+            sudo pacman -Sy --noconfirm pkgconf openssl
+          elif command -v apk &> /dev/null; then
+            sudo apk add --no-cache pkgconfig openssl-dev
+          else
+            echo "Package manager not found. Please install pkg-config and openssl-dev manually."
+            exit 1
+          fi
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
