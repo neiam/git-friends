@@ -3,6 +3,7 @@ name: Rust CI and Docker Build
 on:
   push:
     branches: [ master ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ master ]
 
@@ -63,3 +64,180 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    permissions:
+      contents: write
+      packages: write
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-gnu
+          - x86_64-pc-windows-gnu
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: git-friends-x86_64-linux-gnu.tar.gz
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            name: git-friends-x86_64-linux-musl.tar.gz
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: git-friends-aarch64-linux-gnu.tar.gz
+          - target: x86_64-pc-windows-gnu
+            os: ubuntu-latest
+            name: git-friends-x86_64-windows.zip
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            name: git-friends-x86_64-macos.tar.gz
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            name: git-friends-aarch64-macos.tar.gz
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: "1.86.0"
+          override: true
+          target: ${{ matrix.target }}
+
+      - name: Install cross-compilation tools
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Install musl tools
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - name: Install Windows cross-compilation tools
+        if: matrix.target == 'x86_64-pc-windows-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-x86-64
+
+      - name: Configure cross-compilation
+        run: |
+          case ${{ matrix.target }} in
+            aarch64-unknown-linux-gnu)
+              echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+              ;;
+            x86_64-pc-windows-gnu)
+              echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc" >> $GITHUB_ENV
+              ;;
+          esac
+
+      - name: Build release binary
+        run: |
+          cargo build --release --target ${{ matrix.target }}
+
+      - name: Strip binary (Unix)
+        if: matrix.os == 'ubuntu-latest' && matrix.target != 'x86_64-pc-windows-gnu'
+        run: |
+          case ${{ matrix.target }} in
+            aarch64-unknown-linux-gnu)
+              aarch64-linux-gnu-strip target/${{ matrix.target }}/release/gf-*
+              ;;
+            *)
+              strip target/${{ matrix.target }}/release/gf-*
+              ;;
+          esac
+
+      - name: Strip binary (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          strip target/${{ matrix.target }}/release/gf-*
+
+      - name: Create release archive (Unix)
+        if: matrix.target != 'x86_64-pc-windows-gnu'
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar -czf ../../../${{ matrix.name }} gf-hook gf-server gf-irc gf-tester
+          cd ../../..
+
+      - name: Create release archive (Windows)
+        if: matrix.target == 'x86_64-pc-windows-gnu'
+        run: |
+          cd target/${{ matrix.target }}/release
+          zip -r ../../../${{ matrix.name }} gf-hook.exe gf-server.exe gf-irc.exe gf-tester.exe
+          cd ../../..
+
+      - name: Upload release archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.name }}
+
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Create release notes
+        run: |
+          echo "# Git Friends Release ${GITHUB_REF_NAME}" > release_notes.md
+          echo "" >> release_notes.md
+          echo "## Changes in this release" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "This release includes the following binaries:" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "- \`gf-hook\`: Git hook for commit message enhancement" >> release_notes.md
+          echo "- \`gf-server\`: Main Git Friends server" >> release_notes.md
+          echo "- \`gf-irc\`: IRC client component" >> release_notes.md
+          echo "- \`gf-tester\`: Testing and validation tool" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "## Supported Platforms" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "- Linux (x86_64, aarch64)" >> release_notes.md
+          echo "- Linux (musl)" >> release_notes.md
+          echo "- Windows (x86_64)" >> release_notes.md
+          echo "- macOS (x86_64, Apple Silicon)" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "## Installation" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "1. Download the appropriate archive for your platform" >> release_notes.md
+          echo "2. Extract the binaries" >> release_notes.md
+          echo "3. Place them in your PATH" >> release_notes.md
+          echo "4. Configure \`git-friends.toml\` as needed" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "## Docker Image" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "A Docker image is also available at:" >> release_notes.md
+          echo "\`\`\`" >> release_notes.md
+          echo "ghcr.io/${{ github.repository }}:${GITHUB_REF_NAME}" >> release_notes.md
+          echo "\`\`\`" >> release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/*/*.tar.gz,artifacts/*/*.zip
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
