@@ -15,11 +15,9 @@ Git Friends uses GitHub Actions to automatically build and release binaries for 
 
 The release process builds binaries for the following platforms:
 
-- **Linux x86_64** (GNU and musl)
-- **Linux ARM64** (aarch64)
-- **macOS x86_64** (Intel)
-- **macOS ARM64** (Apple Silicon)
-- **Windows x86_64**
+- **Linux x86_64** (using ubuntu-latest runners)
+- **Windows x86_64** (using windows-latest runners)
+- **macOS x86_64 and Apple Silicon** (using macos-latest runners with universal support)
 
 ## Quick Release
 
@@ -114,8 +112,8 @@ The GitHub Actions workflow (`.github/workflows/rust-ci.yml`) includes three job
 
 ### 2. Release Job
 - Runs only on version tags (`v*`)
-- Builds release binaries for all supported platforms
-- Uses cross-compilation for different architectures
+- Builds release binaries on native platforms using a matrix strategy
+- Uses modern Rust toolchain with caching
 - Strips binaries to reduce size
 - Creates platform-specific archives (.tar.gz for Unix, .zip for Windows)
 
@@ -131,11 +129,8 @@ Each release includes:
 
 ### Binaries
 - `git-friends-x86_64-linux-gnu.tar.gz`
-- `git-friends-x86_64-linux-musl.tar.gz`
-- `git-friends-aarch64-linux-gnu.tar.gz`
 - `git-friends-x86_64-windows.zip`
 - `git-friends-x86_64-macos.tar.gz`
-- `git-friends-aarch64-macos.tar.gz`
 
 ### Docker Images
 - `ghcr.io/your-username/git-friends:latest`
@@ -210,8 +205,8 @@ To test the release process locally:
 # Test version update (dry run)
 ./release.sh prepare 0.2.0 --dry-run
 
-# Test cross-compilation locally
-cargo build --release --target x86_64-unknown-linux-musl
+# Test cross-compilation locally (not needed with native compilation)
+# cargo build --release --target x86_64-unknown-linux-musl
 
 # Test Docker build
 docker build -t git-friends:test .
