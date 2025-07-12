@@ -134,7 +134,7 @@ pub fn format_commit_for_irc(commit_info: &CommitInfo) -> String {
         commit_info
             .repository_url
             .split('/')
-            .last()
+            .next_back()
             .unwrap_or("unknown"),
         commit_info.author_name,
         commit_info.branch,

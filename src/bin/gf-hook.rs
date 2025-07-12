@@ -54,7 +54,7 @@ async fn main() -> Result<()> {
 
     // Check for token in environment if not provided
     let token_env = std::env::var("GIT_FRIENDS_TOKEN").ok();
-    let token = token.map(|s| s.as_str()).or_else(|| token_env.as_deref());
+    let token = token.map(|s| s.as_str()).or(token_env.as_deref());
 
     info!("Starting gf-hook");
 
@@ -97,7 +97,7 @@ async fn main() -> Result<()> {
     // Send to server
     let client = reqwest::Client::new();
     let mut request_builder = client
-        .post(&format!("{}/webhook", server_url))
+        .post(format!("{}/webhook", server_url))
         .json(&commit_info);
 
     if let Some(token) = token {
