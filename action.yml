@@ -1,0 +1,50 @@
+name: 'Git Friends Notifier'
+description: 'Send commit notifications via Git Friends'
+branding:
+  icon: 'git-commit'
+  color: 'blue'
+
+inputs:
+  server-url:
+    description: 'Git Friends server URL'
+    required: true
+  token:
+    description: 'Authentication token'
+    required: true
+  gf-hook-version:
+    description: 'Version of gf-hook to use'
+    required: false
+    default: 'latest'
+  dry-run:
+    description: 'Run in dry-run mode'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Download gf-hook
+      shell: bash
+      run: |
+        if [ "${{ inputs.gf-hook-version }}" = "latest" ]; then
+          # Download latest release
+          curl -s https://api.github.com/repos/your-org/git-friends/releases/latest | \
+            grep "browser_download_url.*gf-hook" | \
+            cut -d '"' -f 4 | \
+            wget -i - -O gf-hook
+        else
+          # Download specific version
+          wget "https://github.com/your-org/git-friends/releases/download/${{ inputs.gf-hook-version }}/gf-hook"
+        fi
+        chmod +x gf-hook
+    
+    - name: Run gf-hook
+      shell: bash
+      env:
+        GIT_FRIENDS_TOKEN: ${{ inputs.token }}
+      run: |
+        if [ "${{ inputs.dry-run }}" = "true" ]; then
+          ./gf-hook --server-url "${{ inputs.server-url }}" --github-actions --dry-run
+        else
+          ./gf-hook --server-url "${{ inputs.server-url }}" --github-actions
+        fi
