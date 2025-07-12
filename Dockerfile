@@ -2,7 +2,7 @@
 # Multi-stage build for efficient production images
 
 # Build stage
-FROM rust:1.75-bullseye as builder
+FROM rust:1.86-bullseye AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
